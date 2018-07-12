@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="description" content="Detection tool for polyglot files"/>
+    <meta name="keywords" content="Polyglot,Polydet,TrID,libmagic"/>
+    <meta name="author" content="co-authored by Julien Campion and Hugo Laloge"/>
+
+    <title>Polydet</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
+          integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+          crossorigin="anonymous"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.2/angular.js"
+            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
+            integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+            crossorigin="anonymous"></script>
+</head>
+<body data-ng-app="polydetApp">
+
+<!-- Github banner -->
+<a href="about:robots"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png" alt="Fork me on GitHub"></a>
+<!-- !Github banner -->
+
+<div class="container"
+     style="padding-top: 1em;">
+
+    <div class="row">
+        <div class="mx-auto">
+            <h6>By Julien Campion and Hugo Laloge</h6>
+        </div>
+    </div>
+
+    <div data-ng-controller="ScannerController"
+         class="row">
+        <div class="col-md-12">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <form name="scannerForm">
+                        <div class="input-group mb-3">
+                            <div class="custom-file">
+                                <input id="analyseFileInput"
+                                       class="custom-file-input"
+                                       type="file"
+                                       name="file[]"
+                                       placeholder=""
+                                       multiple
+                                       required>
+                                <label class="custom-file-label"
+                                       for="analyseFileInput">Choose file</label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="mx-auto">
+                                <input type="submit"
+                                       value="Submit"
+                                       data-ng-click="submit()"
+                                       class="btn btn-primary mb-2"/>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div data-ng-repeat="result in results"
+                         class="row mb-5">
+                        <div class="col-md-12">
+                            <div>
+                                <p>
+                                    Scan results for the file {{ result.filename }}:
+                                    <ng-switch on="result.status">
+                                        <span data-ng-switch-when="dangerous" class="text-danger">potentially dangerous</span><!--
+                                        --><span data-ng-switch-when="suspicious" class="text-warning">suspicious</span><!--
+                                        --><span data-ng-switch-default class="text-success">benign</span><!--
+                                    --></ng-switch>.
+                                    <br/>
+                                    The scan took {{ result.elapsedTime|number:4 }} milliseconds.
+                                </p>
+                            </div>
+
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <td rowspan="2"
+                                        title="Detected extensions">
+                                        Type
+                                    </td>
+                                    <td colspan="3"
+                                        title="Chunks of data that are not used by this file format">
+                                        Suspicious chunks
+                                    </td>
+                                    <td rowspan="2"
+                                        title="Formats found by Polydet">
+                                        Found by <a href="about:robots">Polydet</a>
+                                    </td>
+                                    <td rowspan="2"
+                                        title="Formats found by libmagic, or the file software">
+                                        Found by <a href="https://github.com/file/file"><i>libmagic</i></a>
+                                    </td>
+                                    <td rowspan="2"
+                                        title="Formats found by TrID">
+                                        Found by <a href="http://mark0.net/soft-trid-e.html">TrID</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td title="Begin offset of the chunk">
+                                        Begin
+                                    </td>
+                                    <td title="End offset of the chunk">
+                                        End
+                                    </td>
+                                    <td title="Lenght of the chunk">
+                                        Length
+                                    </td>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr data-ng-repeat-start="entry in result.entries">
+                                    <td rowspan="{{ (entry.suspiciousChunks.length)|max:1 }}">.{{ entry.ext }}</td>
+
+                                    <td data-ng-if-start="entry.suspiciousChunks.length">
+                                        {{ entry.suspiciousChunks[0].offset|hex }}
+                                    </td>
+                                    <td>
+                                        {{ entry.suspiciousChunks[0].offset + entry.suspiciousChunks[0].length|hex }}
+                                    </td>
+                                    <td data-ng-if-end>
+                                        {{ entry.suspiciousChunks[0].length }}
+                                    </td>
+                                    <td data-ng-if="!entry.suspiciousChunks.length" colspan="3"></td>
+
+                                    <td rowspan="{{ entry.suspiciousChunks.length|max:1 }}">
+                                        <span class="text-success">&#x2714;</span>
+                                    </td>
+                                    <td rowspan="{{ entry.suspiciousChunks.length|max:1 }}"
+                                        data-ng-switch="entry.libmagic">
+                                        <span data-ng-switch-when="true" class="text-success">&#x2714;</span>
+                                        <span data-ng-switch-default class="text-danger">&#x1F5F6;</span>
+                                    </td>
+                                    <td rowspan="{{ entry.suspiciousChunks.length|max:1 }}"
+                                        data-ng-switch="entry.trid">
+                                        <span data-ng-switch-default class="text-success">&#x2714;: {{ entry.trid*100 }}%</span>
+                                        <span data-ng-switch-when="false" class="text-danger">&#x1F5F6;</span>
+                                    </td>
+                                </tr>
+
+                                <tr data-ng-repeat-end data-ng-repeat="chunk in entry.suspiciousChunks.slice(1)">
+                                    <td>
+                                        {{ chunk.offset|hex }}
+                                    </td>
+                                    <td>
+                                        {{ chunk.offset + chunk.length|hex }}
+                                    </td>
+                                    <td>
+                                        {{ chunk.length }}
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div data-ng-if="results.length > 0" class="row">
+                        <div class="col-md-12">
+                            <footer>
+                                <p>
+                                    A file with one format but with suspicious chunks will be marked as "<span class="text-warning">suspicious</span>",
+                                    whereas a file with multiple format detected will be marked as "<span class="text-danger">potentially dangerous</span>".
+                                </p>
+                                <p>
+                                    The "suspicious chunks" columns reports the chunks of data unusued by a given format.
+                                    For example, a row with the type "tiff" with the suspicious chunk "0x100 0x200 256"
+                                    means the file is identified as a TIFF file, but with an unused and suspicious chunk of length 256 at the offset 0x100.
+                                </p>
+                            </footer>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script type="application/javascript" src="app.js"></script>
+<script type="application/javascript" src="ui.js"></script>
+</body>
+</html>
