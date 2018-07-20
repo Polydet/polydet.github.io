@@ -10,7 +10,7 @@ polydetApp.filter('max', function maxFilterFactory() {
 
 polydetApp.filter('hex', function hexFilterFactory() {
     return function hexFilter(input) {
-        return '0x' + Number(input).toString(16);
+        return '0x' + Number(input).toString(16).toUpperCase();
     };
 });
 
