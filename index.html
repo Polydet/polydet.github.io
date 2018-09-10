@@ -146,7 +146,7 @@
                                     <td rowspan="{{ entry.suspiciousChunks.length|max:1 }}"
                                         data-ng-switch="entry.trid">
                                         <span data-ng-switch-default class="text-success">&#x2714;: {{ entry.trid*100 }}%</span>
-                                        <span data-ng-switch-when="false" class="text-danger">&#x1F5F6;</span>
+                                        <span data-ng-switch-when="null" class="text-danger">&#x1F5F6;</span>
                                     </td>
                                 </tr>
 
