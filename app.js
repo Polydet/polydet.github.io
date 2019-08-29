@@ -29,7 +29,7 @@ polydetApp.controller('ScannerController', ['$scope', '$http', function ScannerC
             formData.append('file[]', files[i]);
         }
 
-        $http.post('https://polyglotdetector.juliencampion.net/api/analysis', formData, {
+        $http.post('https://polydet.juliencampion.net/api/analysis', formData, {
             transformRequest: angular.identity,
             headers: {'Content-Type': undefined}
         }).then((response) => {
